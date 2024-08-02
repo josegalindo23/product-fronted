@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
+
 
 import {Product} from './models/product'
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -17,24 +18,32 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 
 export class AppComponent implements OnInit {
-
+  
   productArray: Product[] = []
-
-  constructor(private http:HttpClient){}
+  selectedProduct: Product = new Product();
+  
+  constructor(private readonly http:HttpClient){}
   
   ngOnInit(): void {
-    this.http.get<Product[]>("http://localhost:8080").subscribe(products => products.forEach(element => {
-      this.productArray.push(element)
-    }))
+    // this.productArray =[]
+    // this.http.get<Product[]>("http://localhost:8080").subscribe(products => 
+    //   this.productArray = products)
+    this.loadProducts();
   }
-  
 
-  selectedProduct: Product = new Product();
+  loadProducts(): void {
+    this.http.get<Product[]>("http://localhost:8080").subscribe(products => {
+      console.log(products);
+      this.productArray = products; 
+    })
+  }
 
   addProduct(id:number){
-
     if(this.selectedProduct.id === 0) {
-      this.http.post<Product>("http://localhost:8080", this.selectedProduct).subscribe(response => this.productArray.push(response))
+      this.http.post<Product>("http://localhost:8080", this.selectedProduct).subscribe(
+        response => {    
+          this.loadProducts()}
+        )
     }else{
       this.http.put<Product>("http://localhost:8080", this.selectedProduct).subscribe(response => {
         let index=this.productArray.findIndex(elements=> elements.id==id)
@@ -57,7 +66,11 @@ export class AppComponent implements OnInit {
 
   delete(){
     if(confirm("Are you sure you eant to delet it?")){
-      this.http.delete(`http://localhost:8080/${this.selectedProduct.id}`).subscribe()
+      this.http.delete(`http://localhost:8080/${this.selectedProduct.id}`).subscribe(()=> {
+      let index = this.productArray.findIndex(element => element.id == this.selectedProduct.id);
+      this.productArray.splice(index, 1);
+      this.selectedProduct = new Product();
+      })
     }
     
   }
